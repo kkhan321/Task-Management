@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
+@EnableWebSecurity
 public class ApplicationConfig {
 
 	//session creation policy is nothing but when we use spring secuirty all the ends points 
@@ -34,15 +36,16 @@ public class ApplicationConfig {
 	//				).addFilter(null,BasicAuthenticationFilter.class)
 	//		.csrf(csrf->csrf.disable()).cors(cors->cors.conf)
 	//	}
-	
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	@Bean
+	 SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http
 				.sessionManagement(session -> session
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
+						/* .requestMatchers("/auth/signup", "/auth/login").permitAll() */
 						.requestMatchers("/api/**").authenticated()
 						.anyRequest().permitAll())
-				.addFilterBefore(null, BasicAuthenticationFilter.class)
+				.addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
 				.csrf(csrf -> csrf.disable())
 				.cors(cors->cors.configurationSource(corsConfigurationSource()))// uses default cors configuration
 				.httpBasic(Customizer.withDefaults())
